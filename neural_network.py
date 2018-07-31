@@ -1,0 +1,99 @@
+
+
+
+import numpy as np
+import subprocess
+
+class NeuronLayer:
+    def __init__(self,number_of_neurons,inputs_per_neuron):
+        self.synaptic_weights = 2*np.random.random((inputs_per_neuron,number_of_neurons))-1
+
+
+class MlpNetwork:
+    
+    # network_layout is a vector with the number of neurons at each level
+    def __init__(self,network_layout,learning_rate = 1,sigmoid_parameter = 1):
+            self.layers = []
+            self.values = np.array ([ i*[None] for i in network_layout ])
+            self.lr = learning_rate
+            self.b  = sigmoid_parameter
+                        
+            assert sigmoid_parameter > 0
+            assert learning_rate > 0
+
+            for i in range(0,len(network_layout)-1):
+                self.layers.append( NeuronLayer(network_layout[i+1],network_layout[i]))
+    
+    def __sigmoid(self,x):
+        return 1/(1+np.exp(-x))
+
+    # progagates the inputs through the network ie. evaluates the input
+    def propagate(self,inputs):
+        
+        current_state = inputs
+        self.values[0] = current_state
+        value_idx = 1
+
+        for layer in self.layers:
+            current_state = self.__sigmoid(np.dot(current_state,layer.synaptic_weights))    
+            self.values[value_idx] = current_state
+            value_idx+=1
+        return current_state
+
+    # Updates the weights in the network using backwards propagation
+    def __update_weights(self,targets):
+        node_values = reversed(self.values)
+        nvalue = next(node_values)
+        output_error = (targets-nvalue)*nvalue*(1-nvalue)
+        nvalue = next(node_values)
+        wdelta =  self.lr*np.dot(nvalue.T,output_error)
+        
+        prev_weight =  np.copy( self.layers[-1].synaptic_weights) 
+        self.layers[-1].synaptic_weights += wdelta
+        prev_error = output_error
+        
+        for layer in reversed(self.layers[0:-1]):
+            curr_error = nvalue*(1-nvalue)*np.dot(prev_error,prev_weight.T) 
+            nvalue = next(node_values)
+            wdelta =  self.lr*np.dot(nvalue.T,curr_error)
+            prev_weight = np.copy(layer.synaptic_weights)
+            layer.synaptic_weights += wdelta
+            prev_error =  curr_error    
+
+    # Trains the network
+    def train(self,input_data,target_data,num_iterations):
+        for iteration in range(0,num_iterations):
+            self.propagate(input_data)
+            self.__update_weights(target_data)
+
+    def draw_network(self):
+
+        len_array = [max(i.shape) for i in self.values]
+        num_inputs = len_array[0]
+        num_outputs = len_array[-1]
+        num_hidden_layers = len(len_array)-2
+        Nco_array = ';'.join( list(map(str,len_array))[1:])
+        struct_array = ','.join(list(map(str,len_array))[1:-1])
+        
+
+        param_string = ("\n\def\innum{" + str(num_inputs) +"}"
+         +"\n\def\outnum{" +str(num_outputs)+"}"
+         +"\n\def\\numhidden{" +str(num_hidden_layers) + "}"
+         +"\n\def\\networkstruct{" +struct_array+"}"
+         +"\n\setarray{Nco}{" + Nco_array + "}\n")
+        fh = open("neural_params.tex","w")
+        fh.write(param_string)
+        fh.close()
+        subprocess.run(["pdflatex","-interaction=batchmode", "neural.tex"])
+
+
+
+#    a = MlpNetwork([3,2,5,2,1])
+#    inputs = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1], [0, 1, 0], [1, 0, 0], [1, 1, 1], [0, 0, 0]])
+#    outputs = np.array([[0, 1, 1, 1, 1, 0, 0]]).T
+#    a.train(inputs,outputs,10000)
+#    print (a.propagate(np.array([[1,1,0]])))
+#    print (a.propagate(np.array([[0,1,1]])))
+
+#    a.draw_network()
+
