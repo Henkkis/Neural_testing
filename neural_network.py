@@ -21,10 +21,14 @@ class MlpNetwork:
             
             if(output_function == "sigmoid"):
                 self.output_function = self.__sigmoid
+                self.output_error = self.__sigmoid_error
+            
             elif(output_function == "linear"):
                 self.output_function = self.__linear
+                self.output_error = self.__linear_error
             else:
                 self.output_function = NONE
+                self.outout_error = NONE
 
             
             assert sigmoid_parameter > 0
@@ -38,6 +42,12 @@ class MlpNetwork:
 
     def __linear(self,x):
         return x
+    
+    def __linear_error(self,x):
+        return 1
+
+    def __sigmoid_error(self,x):
+        return x*(1-x)
 
     # progagates the inputs through the network ie. evaluates the input
     def propagate(self,inputs):
@@ -60,7 +70,7 @@ class MlpNetwork:
     def __update_weights(self,targets):
         node_values = reversed(self.values)
         nvalue = next(node_values)
-        output_error = (targets-nvalue)*nvalue*(1-nvalue)
+        output_error = (targets-nvalue)*self.output_error(nvalue)
         nvalue = next(node_values)
         wdelta =  self.lr*np.dot(nvalue.T,output_error)
         
