@@ -5,9 +5,14 @@ import numpy as np
 import subprocess
 
 class NeuronLayer:
-    def __init__(self,number_of_neurons,inputs_per_neuron):
+    def __init__(self,number_of_neurons,inputs_per_neuron,momentum =0.9):
         self.synaptic_weights = 2*np.random.random((inputs_per_neuron,number_of_neurons))-1
-        self.synaptic_delta = 0;
+        self.synaptic_delta = 0
+        self.synaptic_delta_previous =0
+        self.momentum = momentum
+        self.bias = 2*np.random.random((1,number_of_neurons))-1
+        self.bias_delta = 0
+
 
 class MlpNetwork:
     
@@ -59,11 +64,11 @@ class MlpNetwork:
 
         # Propagate through the hidden layers
         for layer in self.layers[0:-1]:
-            current_state = self.__sigmoid(np.dot(current_state,layer.synaptic_weights))    
+            current_state = self.__sigmoid(np.dot(current_state,layer.synaptic_weights)+layer.bias)    
             self.values[value_idx] = current_state
             value_idx+=1
         # Propagate through the output
-        current_state = self.output_function(np.dot(current_state,self.layers[-1].synaptic_weights))    
+        current_state = self.output_function(np.dot(current_state,self.layers[-1].synaptic_weights)+self.layers[-1].bias)    
         self.values[-1] = current_state
         return current_state
 
@@ -77,6 +82,7 @@ class MlpNetwork:
         
         prev_weight =  np.copy( self.layers[-1].synaptic_weights) 
         self.layers[-1].synaptic_delta += wdelta
+        self.layers[-1].bias_delta += self.lr*output_error
         prev_error = output_error
         
         for layer in reversed(self.layers[0:-1]):
@@ -85,6 +91,7 @@ class MlpNetwork:
             wdelta =  self.lr*np.dot(nvalue.T,curr_error)
             prev_weight = np.copy(layer.synaptic_weights)
             layer.synaptic_delta += wdelta
+            layer.bias_delta += self.lr*curr_error
             prev_error =  curr_error    
 
     # Trains the network
@@ -97,8 +104,11 @@ class MlpNetwork:
                 self.propagate(input_data[np.newaxis,idx])
                 self.__calc_wdelta(target_data[np.newaxis,idx])
             for layer in self.layers:
-                layer.synaptic_weights += layer.synaptic_delta
+                layer.synaptic_weights += layer.synaptic_delta + layer.momentum*layer.synaptic_delta_previous
+                layer.synaptic_delta_previous = layer.synaptic_delta
                 layer.synaptic_delta =0
+                layer.bias += layer.bias_delta
+                layer.bias_delta =0
 
     def draw_network(self):
 
@@ -122,8 +132,8 @@ class MlpNetwork:
 
 
 #random testing
-a = MlpNetwork([1,3,3,1],0.6,1,"linear")
-x=np.ones((1,100))*np.linspace(0,1,100)
+a = MlpNetwork([1,4,4,1],0.1,1,"linear")
+x=np.ones((1,300))*np.linspace(0,1,300)
 t=np.sin(6*x)
 x=x.T
 t=t.T
@@ -137,10 +147,10 @@ validtarget = t[3::4,:]
 #
 #inputs = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1], [0, 1, 0], [1, 0, 0], [1, 1, 1], [0, 0, 0]])
 #outputs = np.array([[0, 1, 1, 1, 1, 0, 0]]).T
-a.train(train,traintarget,5000,4)
+a.train(train,traintarget,20000,2)
 import pylab as pl
 pl.plot(train,traintarget,'.')
-pl.plot(train,a.propagate(train))
+pl.plot(test,a.propagate(test))
 pl.show()
 
 
