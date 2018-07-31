@@ -12,12 +12,21 @@ class NeuronLayer:
 class MlpNetwork:
     
     # network_layout is a vector with the number of neurons at each level
-    def __init__(self,network_layout,learning_rate = 1,sigmoid_parameter = 1):
+    def __init__(self,network_layout,learning_rate = 1,sigmoid_parameter = 1, output_function = "sigmoid" ):
             self.layers = []
             self.values = np.array ([ i*[None] for i in network_layout ])
             self.lr = learning_rate
             self.b  = sigmoid_parameter
-                        
+
+            
+            if(output_function == "sigmoid"):
+                self.output_function = self.__sigmoid
+            elif(output_function == "linear"):
+                self.output_function = self.__linear
+            else:
+                self.output_function = NONE
+
+            
             assert sigmoid_parameter > 0
             assert learning_rate > 0
 
@@ -25,7 +34,10 @@ class MlpNetwork:
                 self.layers.append( NeuronLayer(network_layout[i+1],network_layout[i]))
     
     def __sigmoid(self,x):
-        return 1/(1+np.exp(-x))
+        return 1/(1+np.exp(-self.b*x))
+
+    def __linear(self,x):
+        return x
 
     # progagates the inputs through the network ie. evaluates the input
     def propagate(self,inputs):
@@ -34,10 +46,14 @@ class MlpNetwork:
         self.values[0] = current_state
         value_idx = 1
 
-        for layer in self.layers:
+        # Propagate through the hidden layers
+        for layer in self.layers[0:-1]:
             current_state = self.__sigmoid(np.dot(current_state,layer.synaptic_weights))    
             self.values[value_idx] = current_state
             value_idx+=1
+        # Propagate through the output
+        current_state = self.output_function(np.dot(current_state,self.layers[-1].synaptic_weights))    
+        self.values[-1] = current_state
         return current_state
 
     # Updates the weights in the network using backwards propagation
@@ -88,12 +104,12 @@ class MlpNetwork:
 
 
 
-#    a = MlpNetwork([3,2,5,2,1])
-#    inputs = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1], [0, 1, 0], [1, 0, 0], [1, 1, 1], [0, 0, 0]])
-#    outputs = np.array([[0, 1, 1, 1, 1, 0, 0]]).T
-#    a.train(inputs,outputs,10000)
-#    print (a.propagate(np.array([[1,1,0]])))
-#    print (a.propagate(np.array([[0,1,1]])))
+a = MlpNetwork([3,4,4,1],0.1)
+inputs = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1], [0, 1, 0], [1, 0, 0], [1, 1, 1], [0, 0, 0]])
+outputs = np.array([[0, 1, 1, 1, 1, 0, 0]]).T
+a.train(inputs,outputs,50000)
+print (a.propagate(np.array([[1,1,0]])))
+print (a.propagate(np.array([[0,1,1]])))
 
 #    a.draw_network()
 
