@@ -24,6 +24,7 @@ class MlpNetwork:
                 self.output_error = self.__sigmoid_error
             
             elif(output_function == "linear"):
+                print("Activated linear output function")
                 self.output_function = self.__linear
                 self.output_error = self.__linear_error
             else:
@@ -115,13 +116,41 @@ class MlpNetwork:
         subprocess.run(["pdflatex","-interaction=batchmode", "neural.tex"])
 
 
+#random testing
+a = MlpNetwork([1,3,3,1],0.6,1,"linear")
+x=np.ones((1,100))*np.linspace(0,1,100)
+t=np.sin(6*x)
+x=x.T
+t=t.T
 
-a = MlpNetwork([3,4,4,1],0.1)
-inputs = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1], [0, 1, 0], [1, 0, 0], [1, 1, 1], [0, 0, 0]])
-outputs = np.array([[0, 1, 1, 1, 1, 0, 0]]).T
-a.train(inputs,outputs,50000)
-print (a.propagate(np.array([[1,1,0]])))
-print (a.propagate(np.array([[0,1,1]])))
+train = x[0::2,:]
+test = x[1::4,:]
+valid = x[3::4,:]
+traintarget = t[0::2,:]
+testtarget = t[1::4,:]
+validtarget = t[3::4,:]
+#
+#inputs = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1], [0, 1, 0], [1, 0, 0], [1, 1, 1], [0, 0, 0]])
+#outputs = np.array([[0, 1, 1, 1, 1, 0, 0]]).T
+a.train(train,traintarget,50000)
+import pylab as pl
+pl.plot(train,traintarget,'.')
+pl.plot(train,a.propagate(train))
+pl.show()
+
+
+#print (a.propagate(np.array([[1,1,0]])))
+#print (a.propagate(np.array([[0,0,1]])))
+#print (a.propagate(np.array([[0,1,1]])))
+#print (a.propagate(np.array([[1,0,1]])))
+#print (a.propagate(np.array([[0,1,0]])))
+#print (a.propagate(np.array([[1,0,0]])))
+#print (a.propagate(np.array([[1,1,1]])))
+#print (a.propagate(np.array([[0,0,0]])))
+
+#print a.layers[0].synaptic_weights
+#print a.layers[1].synaptic_weights
+
 
 #    a.draw_network()
 
