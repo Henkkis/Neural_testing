@@ -7,7 +7,7 @@ import subprocess
 class NeuronLayer:
     def __init__(self,number_of_neurons,inputs_per_neuron):
         self.synaptic_weights = 2*np.random.random((inputs_per_neuron,number_of_neurons))-1
-
+        self.synaptic_delta = 0;
 
 class MlpNetwork:
     
@@ -68,7 +68,7 @@ class MlpNetwork:
         return current_state
 
     # Updates the weights in the network using backwards propagation
-    def __update_weights(self,targets):
+    def __calc_wdelta(self,targets):
         node_values = reversed(self.values)
         nvalue = next(node_values)
         output_error = (targets-nvalue)*self.output_error(nvalue)
@@ -76,7 +76,7 @@ class MlpNetwork:
         wdelta =  self.lr*np.dot(nvalue.T,output_error)
         
         prev_weight =  np.copy( self.layers[-1].synaptic_weights) 
-        self.layers[-1].synaptic_weights += wdelta
+        self.layers[-1].synaptic_delta += wdelta
         prev_error = output_error
         
         for layer in reversed(self.layers[0:-1]):
@@ -84,16 +84,21 @@ class MlpNetwork:
             nvalue = next(node_values)
             wdelta =  self.lr*np.dot(nvalue.T,curr_error)
             prev_weight = np.copy(layer.synaptic_weights)
-            layer.synaptic_weights += wdelta
+            layer.synaptic_delta += wdelta
             prev_error =  curr_error    
 
     # Trains the network
-    def train(self,input_data,target_data,num_iterations):
+    def train(self,input_data,target_data,num_iterations,batch_size=1):
         assert len(input_data) == len(target_data)
+        assert (batch_size > 0 and batch_size <= len(input_data))
         for iteration in range(0,num_iterations):
-            idx = np.random.randint(len(target_data))
-            self.propagate(input_data[np.newaxis,idx])
-            self.__update_weights(target_data[np.newaxis,idx])
+            for i in range(0,batch_size):
+                idx = np.random.randint(len(target_data))
+                self.propagate(input_data[np.newaxis,idx])
+                self.__calc_wdelta(target_data[np.newaxis,idx])
+            for layer in self.layers:
+                layer.synaptic_weights += layer.synaptic_delta
+                layer.synaptic_delta =0
 
     def draw_network(self):
 
@@ -132,7 +137,7 @@ validtarget = t[3::4,:]
 #
 #inputs = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1], [0, 1, 0], [1, 0, 0], [1, 1, 1], [0, 0, 0]])
 #outputs = np.array([[0, 1, 1, 1, 1, 0, 0]]).T
-a.train(train,traintarget,50000)
+a.train(train,traintarget,5000,4)
 import pylab as pl
 pl.plot(train,traintarget,'.')
 pl.plot(train,a.propagate(train))
