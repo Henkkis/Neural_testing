@@ -88,9 +88,11 @@ class MlpNetwork:
 
     # Trains the network
     def train(self,input_data,target_data,num_iterations):
+        assert len(input_data) == len(target_data)
         for iteration in range(0,num_iterations):
-            self.propagate(input_data)
-            self.__update_weights(target_data)
+            idx = np.random.randint(len(target_data))
+            self.propagate(input_data[np.newaxis,idx])
+            self.__update_weights(target_data[np.newaxis,idx])
 
     def draw_network(self):
 
