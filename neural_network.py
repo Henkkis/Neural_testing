@@ -127,7 +127,7 @@ class MlpNetwork:
 #random testing
 a = MlpNetwork([1,4,4,1],0.1,1,"linear")
 x=np.ones((1,300))*np.linspace(0,1,300)
-t=np.sin(6*x)
+t=np.sin(2*np.pi*x) + np.cos(4*np.pi*x) + np.random.randn(300)*0.2
 x=x.T
 t=t.T
 
@@ -144,9 +144,6 @@ a.train(train,traintarget,5000,10)
 import pylab as pl
 pl.plot(train,traintarget,'.')
 print a.propagate(test[np.newaxis,3])[0][0]
-
-for g in a.layers:
-    print g.synaptic_weights
 
 for i in range(len(test)):    
     pl.plot(test[i],a.propagate(test[np.newaxis,i])[0][0],'.')
