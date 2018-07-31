@@ -6,7 +6,7 @@ import subprocess
 
 class NeuronLayer:
     def __init__(self,number_of_neurons,inputs_per_neuron,momentum =0.9):
-        self.synaptic_weights = 2*np.random.random((inputs_per_neuron,number_of_neurons))-1
+        self.synaptic_weights = 2*np.random.random((inputs_per_neuron+1,number_of_neurons+1))-1
         self.synaptic_delta = 0
         self.synaptic_delta_previous =0
         self.momentum = momentum
@@ -55,8 +55,7 @@ class MlpNetwork:
 
     # progagates the inputs through the network ie. evaluates the input
     def propagate(self,inputs):
-        
-        current_state = inputs
+        current_state = np.concatenate((inputs,np.array([[1]])),1)
         self.values[0] = current_state
         value_idx = 1
 
@@ -141,10 +140,17 @@ validtarget = t[3::4,:]
 #
 #inputs = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1], [0, 1, 0], [1, 0, 0], [1, 1, 1], [0, 0, 0]])
 #outputs = np.array([[0, 1, 1, 1, 1, 0, 0]]).T
-a.train(train,traintarget,20000,1)
+a.train(train,traintarget,5000,10)
 import pylab as pl
 pl.plot(train,traintarget,'.')
-pl.plot(test,a.propagate(test))
+print a.propagate(test[np.newaxis,3])[0][0]
+
+for g in a.layers:
+    print g.synaptic_weights
+
+for i in range(len(test)):    
+    pl.plot(test[i],a.propagate(test[np.newaxis,i])[0][0],'.')
+
 pl.show()
 
 
