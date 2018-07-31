@@ -1,0 +1,3 @@
+Try to make the bias nodes better to use ( don't add an extra layer to the weights)
+Better usability ( raw array, do the conversion to numpy internally)
+Propagating a whole data set (lost with the addition of bias nodes , solution probably in the plotting command ish)
