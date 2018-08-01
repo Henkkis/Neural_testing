@@ -6,10 +6,12 @@ import subprocess
 
 class NeuronLayer:
     def __init__(self,number_of_neurons,inputs_per_neuron,momentum =0.9):
-        self.synaptic_weights = 2*np.random.random((inputs_per_neuron+1,number_of_neurons+1))-1
+        self.synaptic_weights = 2*np.random.random((inputs_per_neuron,number_of_neurons))-1
         self.synaptic_delta = 0
         self.synaptic_delta_previous =0
         self.momentum = momentum
+        self.bias=2*np.random.random((1,number_of_neurons))
+        self.bias_delta = 0
 
 
 class MlpNetwork:
@@ -55,17 +57,18 @@ class MlpNetwork:
 
     # progagates the inputs through the network ie. evaluates the input
     def propagate(self,inputs):
-        current_state = np.concatenate((inputs,np.array([[1]])),1)
+        current_state = inputs
         self.values[0] = current_state
         value_idx = 1
 
         # Propagate through the hidden layers
         for layer in self.layers[0:-1]:
-            current_state = self.__sigmoid(np.dot(current_state,layer.synaptic_weights))    
+            current_state = self.__sigmoid(np.dot(current_state,layer.synaptic_weights)+layer.bias)    
             self.values[value_idx] = current_state
+            current_state = current_state 
             value_idx+=1
         # Propagate through the output
-        current_state = self.output_function(np.dot(current_state,self.layers[-1].synaptic_weights))    
+        current_state = self.output_function(np.dot(current_state,self.layers[-1].synaptic_weights) +self.layers[-1].bias  )    
         self.values[-1] = current_state
         return current_state
 
@@ -76,11 +79,13 @@ class MlpNetwork:
         output_error = (targets-nvalue)*self.output_error(nvalue)
         nvalue = next(node_values)
         wdelta =  self.lr*np.dot(nvalue.T,output_error)
+        self.layers[-1].bias_delta += output_error*self.lr
         prev_weight =  np.copy( self.layers[-1].synaptic_weights) 
         self.layers[-1].synaptic_delta += wdelta        
         prev_error = output_error
         for layer in reversed(self.layers[0:-1]):
-            curr_error = nvalue*(1-nvalue)*np.dot(prev_error,prev_weight.T) 
+            curr_error = nvalue*(1-nvalue)*np.dot(prev_error,prev_weight.T)
+            layer.bias_delta += curr_error*self.lr
             nvalue = next(node_values)
             wdelta =  self.lr*np.dot(nvalue.T,curr_error)
             prev_weight = np.copy(layer.synaptic_weights)
@@ -90,18 +95,18 @@ class MlpNetwork:
 
 
     # Trains the network
-    def train(self,input_data,target_data,num_iterations,batch_size=1):
+    def train(self,input_data,target_data,num_iterations):
         assert len(input_data) == len(target_data)
-        assert (batch_size > 0 and batch_size <= len(input_data))
         for iteration in range(0,num_iterations):
-            for i in range(0,batch_size):
-                idx = np.random.randint(len(target_data))
-                self.propagate(input_data[np.newaxis,idx])
-                self.__calc_wdelta(target_data[np.newaxis,idx])
+            idx = np.random.randint(len(target_data))
+            self.propagate(input_data[np.newaxis,idx])
+            self.__calc_wdelta(target_data[np.newaxis,idx])
             for layer in self.layers:
                 layer.synaptic_weights += layer.synaptic_delta + layer.momentum*layer.synaptic_delta_previous
                 layer.synaptic_delta_previous = layer.synaptic_delta
                 layer.synaptic_delta =0
+                layer.bias += layer.bias_delta
+                layer.bias_delta = 0
 
     def draw_network(self):
 
@@ -125,7 +130,7 @@ class MlpNetwork:
 
 
 #random testing
-a = MlpNetwork([1,4,4,1],0.1,1,"linear")
+a = MlpNetwork([1,5,5,1],0.2,1,"linear")
 x=np.ones((1,300))*np.linspace(0,1,300)
 t=np.sin(2*np.pi*x) + np.cos(4*np.pi*x) + np.random.randn(300)*0.2
 x=x.T
@@ -140,14 +145,10 @@ validtarget = t[3::4,:]
 #
 #inputs = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1], [0, 1, 0], [1, 0, 0], [1, 1, 1], [0, 0, 0]])
 #outputs = np.array([[0, 1, 1, 1, 1, 0, 0]]).T
-a.train(train,traintarget,5000,10)
+a.train(train,traintarget,50000)
 import pylab as pl
 pl.plot(train,traintarget,'.')
-print a.propagate(test[np.newaxis,3])[0][0]
-
-for i in range(len(test)):    
-    pl.plot(test[i],a.propagate(test[np.newaxis,i])[0][0],'.')
-
+pl.plot(test,a.propagate(test),'.')
 pl.show()
 
 
