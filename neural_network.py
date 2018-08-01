@@ -3,6 +3,8 @@
 
 import numpy as np
 import subprocess
+import pylab as pl
+
 
 class NeuronLayer:
     def __init__(self,number_of_neurons,inputs_per_neuron,momentum =0.9):
@@ -79,9 +81,9 @@ class MlpNetwork:
         output_error = (targets-nvalue)*self.output_error(nvalue)
         nvalue = next(node_values)
         wdelta =  self.lr*np.dot(nvalue.T,output_error)
-        self.layers[-1].bias_delta += output_error*self.lr
+        self.layers[-1].bias_delta = output_error*self.lr
         prev_weight =  np.copy( self.layers[-1].synaptic_weights) 
-        self.layers[-1].synaptic_delta += wdelta        
+        self.layers[-1].synaptic_delta = wdelta        
         prev_error = output_error
         for layer in reversed(self.layers[0:-1]):
             curr_error = nvalue*(1-nvalue)*np.dot(prev_error,prev_weight.T)
@@ -89,7 +91,7 @@ class MlpNetwork:
             nvalue = next(node_values)
             wdelta =  self.lr*np.dot(nvalue.T,curr_error)
             prev_weight = np.copy(layer.synaptic_weights)
-            layer.synaptic_delta += wdelta 
+            layer.synaptic_delta = wdelta 
             prev_error =  curr_error
 
 
@@ -130,9 +132,9 @@ class MlpNetwork:
 
 
 #random testing
-a = MlpNetwork([1,5,5,1],0.2,1,"linear")
-x=np.ones((1,300))*np.linspace(0,1,300)
-t=np.sin(2*np.pi*x) + np.cos(4*np.pi*x) + np.random.randn(300)*0.2
+a = MlpNetwork([1,3,3,1],0.2,1,"linear")
+x=np.ones((1,40))*np.linspace(0,1,40)
+t=np.sin(2*np.pi*x) + np.cos(4*np.pi*x)
 x=x.T
 t=t.T
 
@@ -145,13 +147,10 @@ validtarget = t[3::4,:]
 #
 #inputs = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1], [0, 1, 0], [1, 0, 0], [1, 1, 1], [0, 0, 0]])
 #outputs = np.array([[0, 1, 1, 1, 1, 0, 0]]).T
-a.train(train,traintarget,50000)
-import pylab as pl
+a.train(train,traintarget,60000)
 pl.plot(train,traintarget,'.')
 pl.plot(test,a.propagate(test),'.')
 pl.show()
-
-
 #print (a.propagate(np.array([[1,1,0]])))
 #print (a.propagate(np.array([[0,0,1]])))
 #print (a.propagate(np.array([[0,1,1]])))
