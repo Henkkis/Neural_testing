@@ -107,7 +107,7 @@ class MlpNetwork:
                 layer.synaptic_delta =0
                 layer.bias += layer.bias_delta
                 layer.bias_delta = 0
-
+ 
     def draw_network(self):
 
         len_array = [max(i.shape) for i in self.values]
