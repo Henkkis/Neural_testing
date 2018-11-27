@@ -3,7 +3,7 @@ import numpy as np
 
 
 # Edit this
-dimensions = [3,4,6,7]
+dimensions = [3,4,5,3]
 
 
 # Dont edit this

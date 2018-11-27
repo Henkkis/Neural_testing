@@ -3,7 +3,6 @@
 
 import numpy as np
 import subprocess
-import pylab as pl
 
 
 class NeuronLayer:
@@ -132,25 +131,25 @@ class MlpNetwork:
 
 
 #random testing
-a = MlpNetwork([1,3,3,1],0.2,1,"linear")
-x=np.ones((1,40))*np.linspace(0,1,40)
-t=np.sin(2*np.pi*x) + np.cos(4*np.pi*x)
-x=x.T
-t=t.T
+#a = MlpNetwork([1,3,3,1],0.2,1,"linear")
+#x=np.ones((1,40))*np.linspace(0,1,40)
+#t=np.sin(2*np.pi*x) + np.cos(4*np.pi*x)
+#x=x.T
+#t=t.T
 
-train = x[0::2,:]
-test = x[1::4,:]
-valid = x[3::4,:]
-traintarget = t[0::2,:]
-testtarget = t[1::4,:]
-validtarget = t[3::4,:]
+#train = x[0::2,:]
+#test = x[1::4,:]
+#valid = x[3::4,:]
+#traintarget = t[0::2,:]
+#testtarget = t[1::4,:]
+#validtarget = t[3::4,:]
 #
 #inputs = np.array([[0, 0, 1], [0, 1, 1], [1, 0, 1], [0, 1, 0], [1, 0, 0], [1, 1, 1], [0, 0, 0]])
 #outputs = np.array([[0, 1, 1, 1, 1, 0, 0]]).T
-a.train(train,traintarget,60000)
-pl.plot(train,traintarget,'.')
-pl.plot(test,a.propagate(test),'.')
-pl.show()
+#a.train(train,traintarget,60000)
+#pl.plot(train,traintarget,'.')
+#pl.plot(test,a.propagate(test),'.')
+#pl.show()
 #print (a.propagate(np.array([[1,1,0]])))
 #print (a.propagate(np.array([[0,0,1]])))
 #print (a.propagate(np.array([[0,1,1]])))
